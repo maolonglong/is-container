@@ -15,12 +15,9 @@
 //! - [How to determine if a process runs inside lxc/Docker?](https://stackoverflow.com/questions/20010199/how-to-determine-if-a-process-runs-inside-lxc-docker)
 //! - [sindresorhus/is-inside-container](https://github.com/sindresorhus/is-inside-container)
 
-#![feature(once_cell)]
-
 use std::fs;
-use std::sync::OnceLock;
 
-static ONCE: OnceLock<bool> = OnceLock::new();
+use once_cell::sync::Lazy;
 
 fn has_docker_env() -> bool {
     fs::metadata("/.dockerenv").is_ok()
@@ -39,5 +36,8 @@ fn has_docker_cgroup() -> bool {
 
 /// The main function provided by this crate. See crate documentation for more information.
 pub fn is_container() -> bool {
-    *ONCE.get_or_init(|| has_docker_env() || has_container_env() || has_docker_cgroup())
+    static CACHED_RESULT: Lazy<bool> =
+        Lazy::new(|| has_docker_env() || has_container_env() || has_docker_cgroup());
+
+    *CACHED_RESULT
 }
