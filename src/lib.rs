@@ -35,7 +35,16 @@ fn has_cgroup_v1() -> bool {
 
 fn has_mountinfo() -> bool {
     fs::read_to_string("/proc/1/mountinfo").map_or(false, |contents| {
-        contents.contains("docker") || contents.contains("lxc")
+        // See https://man7.org/linux/man-pages/man5/proc.5.html
+        //
+        // The file contains lines of the form:
+        // 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+        // (1)(2)(3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+        contents.lines().any(|line| {
+            line.split_whitespace()
+                .nth(3)
+                .map_or(false, |mnt1| mnt1.contains("docker") || mnt1.contains("lxc"))
+        })
     })
 }
 
