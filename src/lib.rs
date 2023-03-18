@@ -6,7 +6,7 @@
 //! use is_container::is_container;
 //!
 //! if is_container() {
-//!     println!("Running inside a Docker container");
+//!     println!("Running inside a container");
 //! }
 //! ```
 //!
@@ -27,17 +27,22 @@ fn has_container_env() -> bool {
     fs::metadata("/run/.containerenv").is_ok()
 }
 
-fn has_docker_cgroup() -> bool {
-    match fs::read_to_string("/proc/1/cgroup") {
-        Ok(contents) => contents.contains("docker") || contents.contains("lxc"),
-        Err(_) => false,
-    }
+fn has_cgroup_v1() -> bool {
+    fs::read_to_string("/proc/1/cgroup").map_or(false, |contents| {
+        contents.contains("docker") || contents.contains("lxc")
+    })
+}
+
+fn has_mountinfo() -> bool {
+    fs::read_to_string("/proc/1/mountinfo").map_or(false, |contents| {
+        contents.contains("docker") || contents.contains("lxc")
+    })
 }
 
 /// The main function provided by this crate. See crate documentation for more information.
 pub fn is_container() -> bool {
     static CACHED_RESULT: Lazy<bool> =
-        Lazy::new(|| has_docker_env() || has_container_env() || has_docker_cgroup());
+        Lazy::new(|| has_docker_env() || has_container_env() || has_mountinfo() || has_cgroup_v1());
 
     *CACHED_RESULT
 }

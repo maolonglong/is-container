@@ -12,7 +12,7 @@ $ cargo add is-container
 use is_container::is_container;
 
 if is_container() {
-    println!("Running inside a Docker container");
+    println!("Running inside a container");
 }
 ```
 
