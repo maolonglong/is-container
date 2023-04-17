@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```no_run
 //! use is_container::is_container;
 //!
 //! if is_container() {
@@ -29,7 +29,7 @@ fn has_container_env() -> bool {
 
 fn has_cgroup_v1() -> bool {
     fs::read_to_string("/proc/1/cgroup").map_or(false, |contents| {
-        contents.contains("docker") || contents.contains("lxc")
+        contents.contains("/docker/") || contents.contains("/lxc/")
     })
 }
 
@@ -41,9 +41,9 @@ fn has_mountinfo() -> bool {
         // 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
         // (1)(2)(3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
         contents.lines().any(|line| {
-            line.split_whitespace()
-                .nth(3)
-                .map_or(false, |mnt1| mnt1.contains("docker") || mnt1.contains("lxc"))
+            line.split_whitespace().nth(3).map_or(false, |mnt1| {
+                mnt1.contains("/docker/") || mnt1.contains("/lxc/")
+            })
         })
     })
 }
